@@ -10,7 +10,6 @@ Metadata:
         Parameters:
           - KeyPairName
           - AccessCidr
-          - RemoteAccessCidr
           - AdditionalEKSAdminUserArn
           - AdditionalEKSAdminRoleArn
       - Label:
@@ -21,21 +20,9 @@ Metadata:
           - PrivateSubnet1Id
           - PrivateSubnet2Id
           - PrivateSubnet3Id
-          - PublicSubnet1Id
-          - PublicSubnet2Id
-          - PublicSubnet3Id
           - PrivateSubnet1Cidr
           - PrivateSubnet2Cidr
           - PrivateSubnet3Cidr
-      - Label:
-          default: Bastion configuration
-        Parameters:
-          - ProvisionBastionHost
-          - BastionInstanceType
-          - BastionOs
-          - BastionRootVolumeSize
-          - BastionEnableTcpForwarding
-          - BastionEnableX11Forwarding
       - Label:
           default: JFrog Artifactory configuration
         Parameters:
@@ -86,12 +73,6 @@ Metadata:
         default: VPC ID
       VpcCidr:
         default: VPC CIDR
-      PublicSubnet1Id:
-        default: Public subnet 1 ID
-      PublicSubnet2Id:
-        default: Public subnet 2 ID
-      PublicSubnet3Id:
-        default: Public subnet 3 ID
       PrivateSubnet1Id:
         default: Private subnet 1 ID
       PrivateSubnet2Id:
@@ -104,18 +85,6 @@ Metadata:
         default: Private subnet 2 CIDR
       PrivateSubnet3Cidr:
         default: Private subnet 3 CIDR
-      ProvisionBastionHost:
-        default: Bastion instance
-      BastionInstanceType:
-        default: Bastion instance type
-      BastionRootVolumeSize:
-        default: Bastion root volume size
-      BastionEnableTcpForwarding:
-        default: Bastion enable TCP forwarding
-      BastionEnableX11Forwarding:
-        default: Bastion enable X11 forwarding
-      BastionOs:
-        default: Bastion operating system
       ArtifactoryProduct:
         default: Artifactory product to install
       ArtifactoryVersion:
@@ -173,14 +142,6 @@ Parameters:
       For example, you might want to grant only your corporate network access to the software.
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     Type: String
-  RemoteAccessCidr:
-    Description:
-      Remote CIDR range for allowing SSH into the bastion instance.
-      We recommend that you set this value to a trusted IP range.
-      For example, you might want to grant specific ranges inside your corporate network SSH access.
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
-    Type: String
   AdditionalEKSAdminUserArn:
     Description: '[OPTIONAL] Amazon Resource Name (ARN): a comma-separated list of IAM users to be granted admin access to the EKS cluster.'
     Default: ""
@@ -198,15 +159,6 @@ Parameters:
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
     Default: 10.0.0.0/16
     Type: String
-  PublicSubnet1Id:
-    Description: ID of the public subnet in Availability Zone 1 of your existing VPC (e.g., subnet-z0376dab).
-    Type: "AWS::EC2::Subnet::Id"
-  PublicSubnet2Id:
-    Description: ID of the public subnet in Availability Zone 2 of your existing VPC (e.g., subnet-a29c3d84).
-    Type: "AWS::EC2::Subnet::Id"
-  PublicSubnet3Id:
-    Description: ID of the public subnet in Availability Zone 3 of your existing VPC (e.g., subnet-a29c3d84).
-    Type: "AWS::EC2::Subnet::Id"
   PrivateSubnet1Id:
     Description: ID of the private subnet in Availability Zone 1 of your existing VPC (e.g., subnet-a0246dcd).
     Type: "AWS::EC2::Subnet::Id"
@@ -309,63 +261,6 @@ Parameters:
     Description: Kubernetes control plane version.
     AllowedValues: ["1.14", "1.13", "1.12"]
     Default: "1.14"
-    Type: String
-  ProvisionBastionHost:
-    Description: Choose Disabled to skip creating a bastion instance. Due to the Artifactory nodes being
-      created in private subnets, the default setting of Enabled this is highly recommended.
-    AllowedValues:
-      - "Enabled"
-      - "Disabled"
-    Default: "Enabled"
-    Type: String
-  BastionInstanceType:
-    Description: Size of the bastion instances.
-    AllowedValues:
-      - t2.nano
-      - t2.micro
-      - t2.small
-      - t2.medium
-      - t2.large
-      - m3.large
-      - m3.xlarge
-      - m3.2xlarge
-      - m4.large
-      - m4.xlarge
-      - m4.2xlarge
-      - m4.4xlarge
-    Default: "t2.micro"
-    Type: String
-  BastionRootVolumeSize:
-    Description: Size of the root volume on the bastion instances.
-    Default: 10
-    Type: Number
-  BastionEnableTcpForwarding:
-    Description: Choose whether to enable TCPForwarding via the bootstrapping of the bastion instance
-      or not.
-    AllowedValues:
-      - "true"
-      - "false"
-    Default: "true"
-    Type: String
-  BastionEnableX11Forwarding:
-    Description: Choose true to enable X11 via the bootstrapping of the bastion host.
-      Setting this value to true will enable X Windows over SSH.
-      X11 forwarding can be very useful but it is also a security risk, so we recommend
-      that you keep the default (false) setting unless required.
-    AllowedValues:
-      - "true"
-      - "false"
-    Default: "false"
-    Type: String
-  BastionOs:
-    Description: Linux distribution for the Amazon Machine Image (AMI) to be used for the bastion instances.
-    AllowedValues:
-      - "Amazon-Linux-HVM"
-      - "CentOS-7-HVM"
-      - "Ubuntu-Server-14.04-LTS-HVM"
-      - "Ubuntu-Server-16.04-LTS-HVM"
-      - "SUSE-SLES-15-HVM"
-    Default: "Amazon-Linux-HVM"
     Type: String
   NumberOfSecondary:
     Description: Number of secondary Artifactory pods to complete your HA deployment.
@@ -569,7 +464,6 @@ Rules:
           - !Ref 'AWS::Region'
 Conditions:
   ArtifactoryHa: !Equals [!Ref ArtifactoryProduct, 'JFrog-Artifactory-Pro']
-  BastionSecurityGroup: !And [!Equals [!Ref ArtifactoryProduct, 'JFrog-Artifactory-Pro'], !Equals [!Ref 'ProvisionBastionHost', 'Enabled']]
   DefaultSize: !Equals [!Ref DefaultDeploymentSize, "true"]
   UsingDefaultBucket: !Equals [!Ref QsS3BucketName, 'aws-quickstart']
 Resources:
@@ -582,28 +476,18 @@ Resources:
           S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref 'QsS3BucketRegion']
       Parameters:
         KeyPairName: !Ref KeyPairName
-        RemoteAccessCIDR: !Ref RemoteAccessCidr
         AdditionalEKSAdminUserArn: !Join [",", !Ref AdditionalEKSAdminUserArn]
         AdditionalEKSAdminRoleArn: !Join [",", !Ref AdditionalEKSAdminRoleArn]
         VPCID: !Ref VpcId
         PrivateSubnet1ID: !Ref PrivateSubnet1Id
         PrivateSubnet2ID: !Ref PrivateSubnet2Id
         PrivateSubnet3ID: !Ref PrivateSubnet3Id
-        PublicSubnet1ID: !Ref PublicSubnet1Id
-        PublicSubnet2ID: !Ref PublicSubnet2Id
-        PublicSubnet3ID: !Ref PublicSubnet3Id
         KubernetesVersion: !Ref KubernetesVersion
         NodeInstanceType: !Ref NodeInstanceType
         NumberOfNodes: !If [ArtifactoryHa, '1', !Ref NumberOfSecondary]
         NodeGroupName: !Sub ${ArtifactoryProduct}
         NodeVolumeSize: !Ref NodeVolumeSize
         BootstrapArguments: !Sub "--kubelet-extra-args '--node-labels=partition=${ArtifactoryProduct}'"
-        ProvisionBastionHost: !Ref ProvisionBastionHost
-        BastionInstanceType: !Ref BastionInstanceType
-        BastionOS: !Ref BastionOs
-        BastionRootVolumeSize: !Ref BastionRootVolumeSize
-        BastionEnableTCPForwarding: !Ref BastionEnableTcpForwarding
-        BastionEnableX11Forwarding: !Ref BastionEnableX11Forwarding
         QSS3BucketName: !Ref QsS3BucketName
         QSS3KeyPrefix: !Sub "${QsS3KeyPrefix}submodules/quickstart-amazon-eks/"
         QSS3BucketRegion: !Ref QsS3BucketRegion
@@ -638,18 +522,7 @@ Resources:
         QSS3KeyPrefix: !Sub "${QsS3KeyPrefix}submodules/quickstart-amazon-eks/"
         QSS3BucketRegion: !Ref QsS3BucketRegion
 
-  # Allow the bastion host to SSH into the secondary node pools
-  BastionToRegularIngress:
-    Condition: BastionSecurityGroup
-    Type: "AWS::EC2::SecurityGroupIngress"
-    Properties:
-      Description: Allow SSH from Bastion server to Regular Nodes
-      GroupId: !GetAtt ArtifactorySecondaryNodesStack.Outputs.EKSNodeSecurityGroup
-      SourceSecurityGroupId: !GetAtt EksStack.Outputs.BastionSecurityGroup
-      IpProtocol: tcp
-      ToPort: 22
-      FromPort: 22
-
+  
   # Allow the secondary node pools to bidirectionally communicate with "initial" (master) nodes
   RegularToMasterIngress:
     Condition: ArtifactoryHa
@@ -751,6 +624,3 @@ Outputs:
   ArtifactoryUrl:
     Value: !GetAtt ArtifactoryCoreStack.Outputs.ArtifactoryUrl
     Description: Public Artifactory URL
-  BastionIp:
-    Value: !GetAtt EksStack.Outputs.BastionIP
-    Description: Bastion host IP, for admin access via SSH
